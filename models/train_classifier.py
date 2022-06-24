@@ -14,7 +14,17 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import classification_report
 
 def load_data(database_filepath):
-    # load data from database
+    '''
+    Load the data from SQL Database and transform it to a data frame. Divide dataframe into X and Y.
+
+    Input:
+    database_filepath - filepath to the SQL database
+
+    Returns:
+    X - the messages to be categorized
+    Y - the categories of the messages
+    col_names - the names of the categories
+    '''
     engine = create_engine('sqlite:///'+database_filepath)
     df = pd.read_sql_table('messages', con= engine)
     X = df['message'].values
@@ -24,7 +34,15 @@ def load_data(database_filepath):
 
 
 def tokenize(text):
-    # Write a tokenization function to process text data
+    '''
+    Tokenize text to process text data
+
+    Input:
+    text - a string to tokenize
+
+    Returns:
+    the tokens of the text
+    '''
     tokens = []
     for tok in word_tokenize(text):
         tokens.append(WordNetLemmatizer().lemmatize(tok.lower().strip()))
@@ -32,6 +50,12 @@ def tokenize(text):
 
 
 def build_model():
+    '''
+    Build the model using a pipleine and GridSearch.
+
+    Returns:
+    model with defined GridSearch parameters
+    '''
     # Build a machine learning pipeline
     pipeline = Pipeline([           
     ('vect', CountVectorizer(tokenizer=tokenize)),
@@ -49,6 +73,15 @@ def build_model():
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    '''
+    Evaluate the model and print accuracy, precision, recall and f1-score for each category
+
+    Input:
+    model - transformed and fitted model
+    X_test - the X values to be tested (the messages)
+    Y_test - the Y values with the correct categories
+    category_names - the names of the categories as list
+    '''
     # Evaluate and print results
     Y_pred = pd.DataFrame(model.predict(X_test))
     for i in range(35):
@@ -64,11 +97,23 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
 
 def save_model(model, model_filepath):
+    '''
+    Saves the model to a pickle-file to a defined path.
+
+    Input:
+    model - transformed and fitted model
+    model_filepath - the path of the pickle file
+    '''
     # Save model in Pickle file
     pickle.dump(model, open(model_filepath, 'wb'))
 
 
 def main():
+    '''
+    split the data into a training set and a test set. 
+    create a machine learning pipeline that uses NLTK, as well as scikit-learn's Pipeline and GridSearchCV to output a final model that uses the message column to predict classifications for 36 categories
+    export your model to a pickle file
+    '''
     if len(sys.argv) == 3:
         database_filepath, model_filepath = sys.argv[1:]
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
