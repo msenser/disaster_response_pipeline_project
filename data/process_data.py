@@ -5,6 +5,16 @@ from sqlalchemy import create_engine
 from sympy import O
 
 def load_data(messages_filepath, categories_filepath):
+    '''
+    Load the data from csv.-files and merge it to one data frame
+
+    Input:
+    messages_filepath - filepath to messages csv file
+    categories_filepath - filepath to categories csv file
+
+    Returns:
+    merged dataframe containing messages and categories
+    '''
     # load messages dataset
     messages = pd.read_csv(messages_filepath)
     # load categories dataset
@@ -15,6 +25,15 @@ def load_data(messages_filepath, categories_filepath):
 
 
 def clean_data(df):
+    '''
+    Clean the data from dataframe and return a dataframe with a single column for each category with only binary values
+
+    Input:
+    df - merged dataframe containing messages and categories
+
+    Returns:
+    cleaned dataframe with a single column for each category with only binary values
+    '''
     # create a dataframe of the 36 individual category columns
     categories = df['categories'].str.split(';',expand=True)
     # select the first row of the categories dataframe
@@ -31,6 +50,8 @@ def clean_data(df):
         categories[column] = categories[column].apply(lambda x: x[-1])
         # convert column from string to numeric
         categories[column] = pd.to_numeric(categories[column]) 
+        # drop all rows with unexpected values 
+        categories.drop(categories[(categories[column] != 0) & (categories[column] != 1)].index, inplace=True)
     # drop the original categories column from `df`
     df.drop(columns=['categories'], inplace=True)
     # concatenate the original dataframe with the new `categories` dataframe
@@ -40,12 +61,22 @@ def clean_data(df):
 
 
 def save_data(df, database_filename):
+    '''
+    Save the data from dataframe to an SQL database
+
+    Input:
+    df - database to be saved
+    database_filename - filename of the SQL database
+    '''
     # Save the clean dataset into an sqlite database
     engine = create_engine('sqlite:///'+database_filename)
     df.to_sql('messages', engine, index=False, if_exists='replace')
 
 
 def main():
+    '''
+    Read the dataset, clean the data, and then store it in a SQLite database
+    '''
     if len(sys.argv) == 4:
 
         messages_filepath, categories_filepath, database_filepath = sys.argv[1:]
